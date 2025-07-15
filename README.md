@@ -1,9 +1,11 @@
-# helloworld
+# battlefield
 
-AstrBot 插件模板
+AstrBot 插件
 
-A template plugin for AstrBot plugin feature
+一个战地风云查询战绩的插件
 
-# 支持
+# 帮助
 
-[帮助文档](https://astrbot.app)
+完善中.......
+
+
