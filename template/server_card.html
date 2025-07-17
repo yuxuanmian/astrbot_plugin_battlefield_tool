@@ -1,0 +1,28 @@
+{% macro server_card(w) %}
+<div class="flex grid grid-cols-6 gap-2 rounded-lg" style="padding: 10px; background-color: rgba(255,255,255,0.05);">
+    <div class=" col-span-2 row-span-2 flex flex-col justify-center items-center">
+        <img src="{{ w.url }}" class="object-scale-down" style="height:90px;width:200px;"/>
+        {{ w.prefix }}
+    </div>
+    <div>
+        <div class="text-1xl text-yellow-400">模式</div>
+        <div class="text-2xl font-bold font-mono">{{ w.mode }}h</div>
+    </div>
+    <div>
+        <div class="text-1xl text-yellow-400">地图</div>
+        <div class="text-2xl font-bold font-mono">{{ w.currentMap }}</div>
+    </div>
+    <div>
+        <div class="text-1xl text-yellow-400">Info</div>
+        <div class="text-2xl font-bold font-mono">{{ w.serverInfo }}</div>
+    </div>
+    <div>
+        <div class="text-1xl text-yellow-400">区域</div>
+        <div class="text-2xl font-bold font-mono">{{ w.region }}</div>
+    </div>
+    <div>
+        <div class="text-1xl text-yellow-400">国家</div>
+        <div class="text-2xl font-bold font-mono">{{ w.country }}</div>
+    </div>
+</div>
+{% endmacro %}

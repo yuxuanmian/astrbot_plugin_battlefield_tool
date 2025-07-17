@@ -2,21 +2,22 @@ from pathlib import Path
 from jinja2 import Environment, FileSystemLoader
 from astrbot.api import logger
 
-import time, json, os,base64
+import time, json, os, base64
 
 from pycparser.c_ast import Default
 
 PARENT_FOLDER = Path(__file__).parent.parent.resolve()
 
+# 各代的banner
 BFV_BANNER = 'https://s1.ax1x.com/2022/12/14/z54oIs.jpg'
 BF1_BANNER = "https://s1.ax1x.com/2022/12/15/zoMaxe.jpg"
 BF2042_BANNER = "https://s1.ax1x.com/2023/01/24/pSYXS3Q.jpg"
 BF4_BANNER = "https://s21.ax1x.com/2025/07/16/pV1XV1S.jpg"
 BF3_BANNER = "https://s21.ax1x.com/2025/07/16/pV1jG5t.jpg"
+BANNERS = {"bfv": BFV_BANNER, "bf1": BF1_BANNER, "bf2042": BF2042_BANNER, "bf4": BF4_BANNER, "bf3": BF3_BANNER}
 
+#默认头像
 DEFAULT_AVATAR = "https://s21.ax1x.com/2025/07/16/pV1Ox6e.jpg"
-
-BANNERS = {"bfv": BFV_BANNER, "bf1": BF1_BANNER, "bf2042": BF2042_BANNER,"bf4": BF4_BANNER, "bf3": BF3_BANNER}
 
 # 创建Jinja2环境并设置模板加载路径
 template_dir = PARENT_FOLDER / 'template'
@@ -25,9 +26,11 @@ env = Environment(loader=FileSystemLoader(template_dir))
 MAIN_TEMPLATE = env.get_template('template.html')
 WEAPONS_TEMPLATE = env.get_template('template_weapons.html')
 VEHICLES_TEMPLATE = env.get_template('template_vehicles.html')
+SERVERS_TEMPLATE = env.get_template('template_servers.html')
 WEAPON_CARD = env.get_template('weapon_card.html')
 VEHICLE_CARD = env.get_template('vehicle_card.html')
 CLASSES_CARD = env.get_template('classes_card.html')
+SERVER_CARD = env.get_template('server_card.html')
 
 
 def sort_list_of_dicts(list_of_dicts, key):
@@ -78,7 +81,7 @@ def bf_main_html_builder(d, game):
     update_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(d['__update_time']))
     d['__hoursPlayed'] = round(d['secondsPlayed'] / 3600, 2)
 
-    # 准备数据而不是渲染HTML
+    # 整理数据
     weapon_data = prepare_weapons_data(d, 5)
     vehicle_data = prepare_vehicles_data(d, 5)
 
@@ -91,6 +94,7 @@ def bf_main_html_builder(d, game):
         game=game
     )
     return html
+
 
 def bf_weapons_html_builder(d, game):
     """
@@ -106,7 +110,7 @@ def bf_weapons_html_builder(d, game):
         d["avatar"] = DEFAULT_AVATAR
     update_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(d['__update_time']))
 
-    # 准备数据而不是渲染HTML
+    # 整理数据
     weapon_data = prepare_weapons_data(d, 50)
 
     html = WEAPONS_TEMPLATE.render(
@@ -117,6 +121,7 @@ def bf_weapons_html_builder(d, game):
         game=game
     )
     return html
+
 
 def bf_vehicles_html_builder(d, game):
     """
@@ -132,7 +137,7 @@ def bf_vehicles_html_builder(d, game):
         d["avatar"] = DEFAULT_AVATAR
     update_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(d['__update_time']))
 
-    # 准备数据而不是渲染HTML
+    # 整理数据
     vehicle_data = prepare_vehicles_data(d, 50)
 
     html = VEHICLES_TEMPLATE.render(
@@ -140,6 +145,27 @@ def bf_vehicles_html_builder(d, game):
         update_time=update_time,
         d=d,
         vehicle_data=vehicle_data if vehicle_data else None,
+        game=game
+    )
+    return html
+
+
+def bf_servers_html_builder(servers_data, game):
+    """
+        构建主要html
+        Args:
+            servers_data: 查询到的数据
+            game: 所查询的游戏
+        Returns:
+            构建的Html
+    """
+    banner = BANNERS[game]
+    update_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(servers_data['__update_time']))
+
+    html = SERVERS_TEMPLATE.render(
+        banner=banner,
+        update_time=update_time,
+        servers_data=servers_data if servers_data else None,
         game=game
     )
     return html

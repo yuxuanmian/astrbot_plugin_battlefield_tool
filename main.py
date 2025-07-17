@@ -6,7 +6,7 @@ from typing import Union, Optional, Pattern
 from data.plugins.astrbot_plugin_battlefield_tool.utils.requestUtil import request_api
 from data.plugins.astrbot_plugin_battlefield_tool.database.BattleFiledDataBase import BattleFieldDataBase
 from data.plugins.astrbot_plugin_battlefield_tool.utils.template import bf_main_html_builder, bf_weapons_html_builder, \
-    bf_vehicles_html_builder
+    bf_vehicles_html_builder,bf_servers_html_builder
 
 import re, os, time
 
@@ -16,7 +16,6 @@ class BattlefieldTool(Star):
     DEFAULT_GAME = "bfv"  # 默认查询哪个游戏
     PIC_FOLDER = "pic_path"  # 默认生成图片的位置
     PIC_PATH = None
-    # STAT_PATTERN = re.compile(r'^(\w*)(?:,?game=(\w+))?$')  # 正则提取用户名和要查询的游戏
     STAT_PATTERN = re.compile(r'^(\w*)(?:[，,]?game=([\w\-+.]+))?$')  # 正则提取用户名和要查询的游戏
     LANG_CN = 'zh-cn'
     LANG_TW = 'zh-tw'
@@ -118,6 +117,30 @@ class BattlefieldTool(Star):
         if player_data.get('code') == 200:
             player_data['__update_time'] = time.time()
             pic_url = await self._vehicles_data_to_pic(player_data, game)
+            yield event.image_result(pic_url)
+
+    @filter.command("servers", alias=["服务器"])
+    async def bf_servers(self, event: AstrMessageEvent):
+        """查询战地五用户数据"""
+        message_str = event.message_str
+        lang = self.LANG_CN
+        # 解析命令
+        server_name, game = self._parse_input_regex(['servers', '服务器'], self.STAT_PATTERN, message_str)
+        if server_name is None:
+            raise ValueError("不能查所有哦~")
+        logger.info(f"查询服务器:{server_name}，所查询游戏:{game}")
+        # 战地1使用繁中
+        if game == "bf1":
+            lang = self.LANG_TW
+        # 调用API查询玩家数据
+        servers_data = await request_api(game, "servers", {'name': server_name, 'lang': lang, 'platform': 'pc','region':'all','limit':10})
+        if servers_data is None:
+            yield event.plain_result("API调用失败，没有响应任何信息")
+        if servers_data.get("code") != 200:
+            yield event.plain_result(servers_data.get("errors")[0])
+        if servers_data.get('code') == 200:
+            servers_data['__update_time'] = time.time()
+            pic_url = await self._servers_data_to_pic(servers_data, game)
             yield event.image_result(pic_url)
 
     @filter.command("bind", alias=["绑定"])
@@ -237,5 +260,16 @@ class BattlefieldTool(Star):
             返回生成的图片
         """
         html = bf_vehicles_html_builder(data, game)
+        url = await self.html_render(html, {}, True, {"clip": {"x": 0, "y": 0, "width": 700, "height": 10000}})
+        return url
+
+    async def _servers_data_to_pic(self, data: dict, game: str):
+        """将查询的数据转为图片
+        Args:
+            data:查询到的战绩数据等
+        Returns:
+            返回生成的图片
+        """
+        html = bf_servers_html_builder(data, game)
         url = await self.html_render(html, {}, True, {"clip": {"x": 0, "y": 0, "width": 700, "height": 10000}})
         return url
