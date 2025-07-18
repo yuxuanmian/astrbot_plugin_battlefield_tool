@@ -165,7 +165,7 @@ def bf_servers_html_builder(servers_data, game):
     html = SERVERS_TEMPLATE.render(
         banner=banner,
         update_time=update_time,
-        servers_data=servers_data if servers_data else None,
+        servers_data=servers_data['servers'] if servers_data else None,
         game=game
     )
     return html
