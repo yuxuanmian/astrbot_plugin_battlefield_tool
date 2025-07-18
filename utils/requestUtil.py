@@ -1,16 +1,13 @@
-import json  # 处理JSON数据格式
-
-import aiohttp  # 发送HTTP请求
+import json,asyncio,aiohttp
 
 from astrbot import logger
-
-from pathlib import Path  # 面向对象的文件路径操作
+from pathlib import Path
 
 
 API_SITE = "https://api.gametools.network/"
 
 
-async def request_api(game, prop='stats', params=None):
+async def request_api(game, prop='stats', params=None,timeout=10):
     """
     异步请求API
         Args:
@@ -30,7 +27,8 @@ async def request_api(game, prop='stats', params=None):
 
     async with aiohttp.ClientSession() as session:
         try:
-            async with session.get(url, params=params) as response:
+            timeout_obj = aiohttp.ClientTimeout(total=timeout)
+            async with session.get(url, params=params, timeout=timeout_obj) as response:
                 if response.status == 200:
                     result = await response.json()
                     result['code'] = response.status
@@ -42,8 +40,14 @@ async def request_api(game, prop='stats', params=None):
                     logger.error(f"Battlefield Tool 调用接口失败，错误信息{error_dict}")
                     return error_dict
         except aiohttp.ClientError as e:
-            logger.error(f"网络请求异常: {str(e)}")
-            raise
+            error_msg = f"网络请求异常: {str(e)}"
+            logger.error(error_msg)
+            raise ConnectionError(error_msg) from e
         except json.JSONDecodeError as e:
-            logger.error(f"JSON解析失败: {str(e)}")
-            raise
+            error_msg = f"JSON解析失败: {str(e)}"
+            logger.error(error_msg)
+            raise ValueError(error_msg) from e
+        except asyncio.TimeoutError as e:
+            error_msg = f"请求超时: {timeout}秒内未收到响应"
+            logger.error(error_msg)
+            raise TimeoutError(error_msg) from e

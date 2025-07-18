@@ -9,12 +9,20 @@ from pycparser.c_ast import Default
 PARENT_FOLDER = Path(__file__).parent.parent.resolve()
 
 # 各代的banner
-BFV_BANNER = 'https://s1.ax1x.com/2022/12/14/z54oIs.jpg'
-BF1_BANNER = "https://s1.ax1x.com/2022/12/15/zoMaxe.jpg"
-BF2042_BANNER = "https://s1.ax1x.com/2023/01/24/pSYXS3Q.jpg"
-BF4_BANNER = "https://s21.ax1x.com/2025/07/16/pV1XV1S.jpg"
 BF3_BANNER = "https://s21.ax1x.com/2025/07/16/pV1jG5t.jpg"
-BANNERS = {"bfv": BFV_BANNER, "bf1": BF1_BANNER, "bf2042": BF2042_BANNER, "bf4": BF4_BANNER, "bf3": BF3_BANNER}
+BF4_BANNER = "https://s21.ax1x.com/2025/07/16/pV1XV1S.jpg"
+BF1_BANNER = "https://s1.ax1x.com/2022/12/15/zoMaxe.jpg"
+BFV_BANNER = 'https://s1.ax1x.com/2022/12/14/z54oIs.jpg'
+# BF2042_BANNER = "https://s1.ax1x.com/2023/01/24/pSYXS3Q.jpg"
+BANNERS = {"bf3": BF3_BANNER,"bf4": BF4_BANNER,"bf1": BF1_BANNER,"bfv": BFV_BANNER}
+
+
+BF3_LOGO = "https://s21.ax1x.com/2025/07/19/pV3I9ET.png"
+BF4_LOGO = "https://s21.ax1x.com/2025/07/19/pV3IRaT.png"
+BF1_LOGO = "https://s21.ax1x.com/2025/07/19/pV35O3j.png"
+BFV_LOGO = "https://s21.ax1x.com/2025/07/19/pV35LCQ.png"
+
+LOGOS = {"bf3": BF3_LOGO,"bf4": BF4_LOGO,"bf1": BF1_LOGO,"bfv": BFV_LOGO}
 
 #默认头像
 DEFAULT_AVATAR = "https://s21.ax1x.com/2025/07/16/pV1Ox6e.jpg"
@@ -160,10 +168,12 @@ def bf_servers_html_builder(servers_data, game):
             构建的Html
     """
     banner = BANNERS[game]
+    logo = LOGOS[game]
     update_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(servers_data['__update_time']))
 
     html = SERVERS_TEMPLATE.render(
         banner=banner,
+        logo=logo,
         update_time=update_time,
         servers_data=servers_data['servers'] if servers_data else None,
         game=game

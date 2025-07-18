@@ -6,7 +6,7 @@ from typing import Union, Optional, Pattern
 from data.plugins.astrbot_plugin_battlefield_tool.utils.requestUtil import request_api
 from data.plugins.astrbot_plugin_battlefield_tool.database.BattleFiledDataBase import BattleFieldDataBase
 from data.plugins.astrbot_plugin_battlefield_tool.utils.template import bf_main_html_builder, bf_weapons_html_builder, \
-    bf_vehicles_html_builder,bf_servers_html_builder
+    bf_vehicles_html_builder, bf_servers_html_builder
 
 import re, os, time
 
@@ -66,7 +66,7 @@ class BattlefieldTool(Star):
         lang = self.LANG_CN
         qq_id = event.get_sender_id()
         # 解析命令
-        ea_name, game = self._parse_input_regex(['weapons','武器'], self.STAT_PATTERN, message_str)
+        ea_name, game = self._parse_input_regex(['weapons', '武器'], self.STAT_PATTERN, message_str)
         # 如果没有传入ea_name则查询已绑定的
         if ea_name is None:
             bing_data = self._query_bind_user(qq_id)
@@ -133,7 +133,9 @@ class BattlefieldTool(Star):
         if game == "bf1":
             lang = self.LANG_TW
         # 调用API查询玩家数据
-        servers_data = await request_api(game, "servers", {'name': server_name, 'lang': lang, 'platform': 'pc','region':'all','limit':10})
+        servers_data = await request_api(game, "servers",
+                                         {'name': server_name, 'lang': lang, 'platform': 'pc', 'region': 'all',
+                                          'limit': 10})
         if servers_data is None:
             yield event.plain_result("API调用失败，没有响应任何信息")
         if servers_data.get("code") != 200:
@@ -149,7 +151,7 @@ class BattlefieldTool(Star):
         message_str = event.message_str
         qq_id = event.get_sender_id()
         # 先查询是否绑定过
-        ea_name, game = self._parse_input_regex(['bind','绑定'], None, message_str)
+        ea_name, game = self._parse_input_regex(['bind', '绑定'], None, message_str)
         # 调用bfv的接口查询用户是否存在
         player_data = await request_api('bfv', "stats", {'name': ea_name, 'lang': 'zh-cn', 'platform': 'pc'})
         if player_data is None:
@@ -231,14 +233,16 @@ class BattlefieldTool(Star):
         """可选择实现异步的插件销毁方法，当插件被卸载/停用时会调用。"""
 
     async def _main_data_to_pic(self, data: dict, game: str):
-        """将查询的数据转为图片
+        """将查询的全部数据转为图片
         Args:
             data:查询到的战绩数据等
         Returns:
             返回生成的图片
         """
         html = bf_main_html_builder(data, game)
-        url = await self.html_render(html, {}, True, {"clip": {"x": 0, "y": 0, "width": 700, "height": 2353}})
+        url = await self.html_render(html, {}, True,
+                                     {"timeout": 10000, "quality": 100,
+                                      "clip": {"x": 0, "y": 0, "width": 700, "height": 2353}})
         return url
 
     async def _weapons_data_to_pic(self, data: dict, game: str):
@@ -249,7 +253,9 @@ class BattlefieldTool(Star):
             返回生成的图片
         """
         html = bf_weapons_html_builder(data, game)
-        url = await self.html_render(html, {}, True, {"clip": {"x": 0, "y": 0, "width": 700, "height": 10000}})
+        url = await self.html_render(html, {}, True,
+                                     {"timeout": 10000, "quality": 100,
+                                      "clip": {"x": 0, "y": 0, "width": 700, "height": 10000}})
         return url
 
     async def _vehicles_data_to_pic(self, data: dict, game: str):
@@ -260,16 +266,26 @@ class BattlefieldTool(Star):
             返回生成的图片
         """
         html = bf_vehicles_html_builder(data, game)
-        url = await self.html_render(html, {}, True, {"clip": {"x": 0, "y": 0, "width": 700, "height": 10000}})
+        url = await self.html_render(html, {}, True,
+                                     {"timeout": 10000, "quality": 100,
+                                      "clip": {"x": 0, "y": 0, "width": 700, "height": 10000}})
         return url
 
     async def _servers_data_to_pic(self, data: dict, game: str):
-        """将查询的数据转为图片
+        """将查询的服务器数据转为图片
         Args:
             data:查询到的战绩数据等
         Returns:
             返回生成的图片
         """
+        # 数据量较少时设置高度
+        height = 10000
+        if data['servers'] is not None and len(data['servers']) == 1:
+            height = 450
+        elif data['servers'] is not None and len(data['servers']) == 2:
+            height = 650
         html = bf_servers_html_builder(data, game)
-        url = await self.html_render(html, {}, True, {"clip": {"x": 0, "y": 0, "width": 700, "height": 10000}})
+        url = await self.html_render(html, {}, True,
+                                     {"timeout": 10000, "quality": 100,
+                                      "clip": {"x": 0, "y": 0, "width": 700, "height": height}})
         return url

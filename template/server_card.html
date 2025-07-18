@@ -6,20 +6,20 @@
     </div>
     <div class="flex-1 flex flex-col gap-2">
         <div>
-            <div class="text-1xl text-yellow-400">服名</div>
-            <div class="text-xl font-bold font-mono">{{ w.prefix }}</div>
+            <div class="text-1xl text-yellow-400">服务器</div>
+            <div class="text-xl font-bold font-mono truncate max-w-[400px]" title="{{ w.prefix }}">{{ w.prefix }}</div>
         </div>
         <div class="flex grid grid-cols-3 gap-2">
             <div>
                 <div class="text-1xl text-yellow-400">模式</div>
-                <div class="text-xl font-bold font-mono">{{ w.mode }}</div>
+                <div class="text-xl font-bold font-mono truncate max-w-[80px]">{{ w.mode }}</div>
             </div>
             <div>
                 <div class="text-1xl text-yellow-400">人数</div>
                 <div class="text-xl font-bold font-mono">{{ w.serverInfo }}</div>
             </div>
             <div>
-                <div class="text-1xl text-yellow-400">国家</div>
+                <div class="text-1xl text-yellow-400">区服</div>
                 <div class="text-xl font-bold font-mono">{{ w.country }}</div>
             </div>
         </div>
