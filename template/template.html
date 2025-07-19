@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <meta name="viewport" content="width=700px,height=10px,initial-scale=1">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -35,108 +36,110 @@
     </style>
     <title></title>
 </head>
+
 <body>
 
-<div class="bg-cover" style="background-image: url({{ banner }});">
-    <div style="margin-left:40px;padding-top: 60px;padding-bottom: 20px; margin-right: 350px;"
-         class="flex flex-col flex-nowarp justify-center items-center">
-        <img src="{{ d.avatar }}" alt="avatar" class="rounded-lg" width="128px"/>
-        <div class="font-bold text-3xl">{{ d.userName }}</div>
-        <div class="flex items-center font-semibold text-gray-200">
-            <img src="{{ d.rankImg }}" width="32px"/>
-            &nbsp;
-            等级 {{ d.rank }}
+    <div class="bg-cover" style="background-image: url('{{ banner }}');">
+        <div style="margin-left:40px;padding-top: 60px;padding-bottom: 20px; margin-right: 350px;"
+            class="flex flex-col flex-nowarp justify-center items-center">
+            <img src="{{ d.avatar }}" alt="avatar" class="rounded-lg" width="128px" />
+            <div class="font-bold text-3xl">{{ d.userName }}</div>
+            <div class="flex items-center font-semibold text-gray-200">
+                <img src="{{ d.rankImg }}" width="32px" />
+                &nbsp;
+                等级 {{ d.rank }}
+            </div>
+            <div class="font-semibold text-gray-200">游戏时间：{{ d.__hoursPlayed }} h</div>
         </div>
-        <div class="font-semibold text-gray-200">游戏时间：{{ d.__hoursPlayed }} h</div>
+        <div class="bg-gradient-to-b from-transparent to-bb" style="padding: 3%;"> &nbsp;</div>
     </div>
-    <div class="bg-gradient-to-b from-transparent to-bb" style="padding: 3%;"> &nbsp;</div>
-</div>
-<t1>基本信息</t1>
-<div class="flex flex-col justify-center grid grid-cols-5 gap-4 rounded-lg"
-     style="margin:0px 20px; padding: 10px; background-color: rgba(255,255,255,0.05);">
-    <div>
-        <div class="text-1xl text-yellow-400">击杀</div>
-        <div class="text-2xl font-bold font-mono">{{ d.kills }}</div>
+    <t1>基本信息</t1>
+    <div class="flex flex-col justify-center grid grid-cols-5 gap-4 rounded-lg"
+        style="margin:0px 20px; padding: 10px; background-color: rgba(255,255,255,0.05);">
+        <div>
+            <div class="text-1xl text-yellow-400">击杀</div>
+            <div class="text-2xl font-bold font-mono">{{ d.kills }}</div>
+        </div>
+        <div>
+            <div class="text-1xl text-yellow-400">K/D</div>
+            <div class="text-2xl font-bold font-mono">{{ d.killDeath }}</div>
+        </div>
+        <div>
+            <div class="text-1xl text-yellow-400">KPM</div>
+            <div class="text-2xl font-bold font-mono">{{ d.killsPerMinute }}</div>
+        </div>
+        <div>
+            <div class="text-1xl text-yellow-400">爆头率</div>
+            <div class="text-2xl font-bold font-mono">{{ d.headshots }}</div>
+        </div>
+        <div>
+            <div class="text-1xl text-yellow-400">命中率</div>
+            <div class="text-2xl font-bold font-mono">{{ d.accuracy }}</div>
+        </div>
+        <div>
+            <div class="text-1xl text-yellow-400">拉人数</div>
+            <div class="text-2xl font-bold font-mono">{{ d.revives }}</div>
+        </div>
+        <div>
+            <div class="text-1xl text-yellow-400">爆头数</div>
+            <div class="text-2xl font-bold font-mono">{{ d.headShots }}</div>
+        </div>
+        <div>
+            <div class="text-1xl text-yellow-400">最远爆头</div>
+            <div class="text-2xl font-bold font-mono">{{ d.longestHeadShot }}m</div>
+        </div>
+        <div>
+            <div class="text-1xl text-yellow-400">胜利场数</div>
+            <div class="text-2xl font-bold font-mono">{{ d.wins }}</div>
+        </div>
+        <div>
+            <div class="text-1xl text-yellow-400">最高连杀</div>
+            <div class="text-2xl font-bold font-mono">{{ d.highestKillStreak }}</div>
+        </div>
     </div>
-    <div>
-        <div class="text-1xl text-yellow-400">K/D</div>
-        <div class="text-2xl font-bold font-mono">{{ d.killDeath }}</div>
+    <t1>武器信息</t1>
+    <br />
+    <div class="flex flex-col justify-center gap-2" style="margin:0px 20px; ">
+        {% from "weapon_card.html" import weapon_card %}
+        {% if weapon_data is not none %}
+        {% for weapon in weapon_data %}
+        {{ weapon_card(weapon) }}
+        {% if not loop.last %}<br />{% endif %}
+        {% endfor %}
+        {% else %}
+        <div class="text-center text-slate-400">暂无武器数据</div>
+        {% endif %}
+        <div class="text-center text-slate-400">
+            使用
+            <span class="text-sky-500">
+                weapons [玩家id],game={{ game }}
+            </span>
+            查看更多数据
+        </div>
     </div>
-    <div>
-        <div class="text-1xl text-yellow-400">KPM</div>
-        <div class="text-2xl font-bold font-mono">{{ d.killsPerMinute }}</div>
+    <t1>载具信息</t1>
+    <div class="flex flex-col justify-center gap-2" style="margin:0px 20px;">
+        {% from "vehicle_card.html" import vehicle_card %}
+        {% if vehicle_data is not none %}
+        {% for vehicle in vehicle_data %}
+        {{ vehicle_card(vehicle) }}
+        {% if not loop.last %}<br />{% endif %}
+        {% endfor %}
+        {% else %}
+        <div class="text-center text-slate-400">暂无载具数据</div>
+        {% endif %}
+        <div class="text-center text-slate-400">
+            使用
+            <span class="text-sky-500">
+                vehicles [玩家id],game={{ game }}
+            </span>
+            查看更多数据
+        </div>
     </div>
-    <div>
-        <div class="text-1xl text-yellow-400">爆头率</div>
-        <div class="text-2xl font-bold font-mono">{{ d.headshots }}</div>
+    <div class="flex flex-col justify-center items-center text-slate-400 py-3">
+        <span>powered by astrbot</span>
+        <span>数据更新时间：{{ update_time }}</span>
     </div>
-    <div>
-        <div class="text-1xl text-yellow-400">命中率</div>
-        <div class="text-2xl font-bold font-mono">{{ d.accuracy }}</div>
-    </div>
-    <div>
-        <div class="text-1xl text-yellow-400">拉人数</div>
-        <div class="text-2xl font-bold font-mono">{{ d.revives }}</div>
-    </div>
-    <div>
-        <div class="text-1xl text-yellow-400">爆头数</div>
-        <div class="text-2xl font-bold font-mono">{{ d.headShots }}</div>
-    </div>
-    <div>
-        <div class="text-1xl text-yellow-400">最远爆头</div>
-        <div class="text-2xl font-bold font-mono">{{ d.longestHeadShot }}m</div>
-    </div>
-    <div>
-        <div class="text-1xl text-yellow-400">胜利场数</div>
-        <div class="text-2xl font-bold font-mono">{{ d.wins }}</div>
-    </div>
-    <div>
-        <div class="text-1xl text-yellow-400">最高连杀</div>
-        <div class="text-2xl font-bold font-mono">{{ d.highestKillStreak }}</div>
-    </div>
-</div>
-<t1>武器信息</t1>
-<br/>
-<div class="flex flex-col justify-center gap-2" style="margin:0px 20px; ">
-    {% from "weapon_card.html" import weapon_card %}
-    {% if weapon_data is not none %}
-    {% for weapon in weapon_data %}
-    {{ weapon_card(weapon) }}
-    {% if not loop.last %}<br/>{% endif %}
-    {% endfor %}
-    {% else %}
-    <div class="text-center text-slate-400">暂无武器数据</div>
-    {% endif %}
-    <div class="text-center text-slate-400">
-        使用
-        <span class="text-sky-500">
-         weapons [玩家id],game={{ game }}
-      </span>
-        查看更多数据
-    </div>
-</div>
-<t1>载具信息</t1>
-<div class="flex flex-col justify-center gap-2" style="margin:0px 20px;">
-    {% from "vehicle_card.html" import vehicle_card %}
-    {% if vehicle_data is not none %}
-    {% for vehicle in vehicle_data %}
-    {{ vehicle_card(vehicle) }}
-    {% if not loop.last %}<br/>{% endif %}
-    {% endfor %}
-    {% else %}
-    <div class="text-center text-slate-400">暂无载具数据</div>
-    {% endif %}
-    <div class="text-center text-slate-400">
-        使用
-        <span class="text-sky-500">
-          vehicles [玩家id],game={{ game }}
-      </span>
-        查看更多数据
-    </div>
-</div>
-<div class="flex flex-col justify-center items-center text-slate-400 py-3">
-    <span>powered by astrbot</span>
-    <span>数据更新时间：{{ update_time }}</span>
-</div>
 </body>
+
 </html>

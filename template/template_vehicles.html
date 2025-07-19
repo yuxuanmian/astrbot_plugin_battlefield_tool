@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <meta name="viewport" content="width=700px,height=10px,initial-scale=1">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -35,31 +36,33 @@
     </style>
     <title></title>
 </head>
+
 <body>
 
-<div class="bg-cover" style="background-image: url({{ banner }});">
-    <div style="margin-left:40px;padding-top: 60px;padding-bottom: 20px; margin-right: 350px;"
-         class="flex flex-col flex-nowarp justify-center items-center">
-        <img src="{{ d.avatar }}" alt="avatar" class=" rounded-lg" width="128px"/>
-        <div class="font-bold text-3xl">{{ d.userName }}</div>
+    <div class="bg-cover" style="background-image: url('{{ banner }}');">
+        <div style="margin-left:40px;padding-top: 60px;padding-bottom: 20px; margin-right: 350px;"
+            class="flex flex-col flex-nowarp justify-center items-center">
+            <img src="{{ d.avatar }}" alt="avatar" class=" rounded-lg" width="128px" />
+            <div class="font-bold text-3xl">{{ d.userName }}</div>
+        </div>
+        <div class="bg-gradient-to-b from-transparent to-bb" style="padding: 3%;"> &nbsp;</div>
     </div>
-    <div class="bg-gradient-to-b from-transparent to-bb" style="padding: 3%;"> &nbsp;</div>
-</div>
-<t1>载具信息</t1>
-<div class="flex flex-col justify-center gap-2" style="margin:0px 20px;">
-    {% from "vehicle_card.html" import vehicle_card %}
-    {% if vehicle_data is not none %}
-    {% for vehicle in vehicle_data %}
-    {{ vehicle_card(vehicle) }}
-    {% if not loop.last %}<br/>{% endif %}
-    {% endfor %}
-    {% else %}
-    <div class="text-center text-slate-400">暂无载具数据</div>
-    {% endif %}
-</div>
-<div class="flex flex-col justify-center items-center text-slate-400 py-3">
-    <span>powered by astrbot</span>
-    <span>数据更新时间：{{ update_time }}</span>
-</div>
+    <t1>载具信息</t1>
+    <div class="flex flex-col justify-center gap-2" style="margin:0px 20px;">
+        {% from "vehicle_card.html" import vehicle_card %}
+        {% if vehicle_data is not none %}
+        {% for vehicle in vehicle_data %}
+        {{ vehicle_card(vehicle) }}
+        {% if not loop.last %}<br />{% endif %}
+        {% endfor %}
+        {% else %}
+        <div class="text-center text-slate-400">暂无载具数据</div>
+        {% endif %}
+    </div>
+    <div class="flex flex-col justify-center items-center text-slate-400 py-3">
+        <span>powered by astrbot</span>
+        <span>数据更新时间：{{ update_time }}</span>
+    </div>
 </body>
+
 </html>

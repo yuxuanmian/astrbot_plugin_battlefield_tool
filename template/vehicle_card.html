@@ -1,8 +1,8 @@
 {% macro vehicle_card(v) %}
 <div class="flex items-center grid grid-cols-6 gap-2 rounded-lg"
-     style="padding: 10px; background-color: rgba(255,255,255,0.05);">
+    style="padding: 10px; background-color: rgba(255,255,255,0.05);">
     <div class="col-span-2 row-span-2 flex flex-col justify-center items-center">
-        <img src="{{ v.image }}" class="object-scale-down" style="height:50px;width:150px;"/>
+        <img src="{{ v.image }}" class="object-scale-down" style="height:50px;width:150px;" />
         {{ v.vehicleName }}
     </div>
     <div>
