@@ -45,7 +45,7 @@
 
 html转图服务能力来自[CampuxUtility](https://github.com/idoknow/CampuxUtility)  
 
-如果条件允许建议自部署一个，详见步骤见[Astrbot文档](https://astrbot.app/)
+如果条件允许建议自部署一个，详见步骤见[Astrbot文档](https://astrbot.app/)的其他章
 
 ## 👍致谢
 ### 🎮 数据服务
