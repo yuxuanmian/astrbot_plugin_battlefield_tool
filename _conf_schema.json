@@ -1,0 +1,20 @@
+{
+  "default_game": {
+    "hint": "默认查询哪一代战地，可选值：[bf4,bf1,bfv]",
+    "description": "默认查询",
+    "type": "string",
+    "default": "bfv"
+  },
+  "timeout_config": {
+    "hint": "部分地区访问api.gametools.network较慢，在这里设置超时时间",
+    "description": "超时时间",
+    "type": "int",
+    "default": 15
+  },
+  "img_quality": {
+    "hint": "图片质量",
+    "description": "渲染图片的质量(0-100)",
+    "type": "int",
+    "default": 90
+  }
+}
