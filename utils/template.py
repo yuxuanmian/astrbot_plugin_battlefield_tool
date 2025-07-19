@@ -35,7 +35,6 @@ VEHICLES_TEMPLATE = env.get_template("template_vehicles.html")
 SERVERS_TEMPLATE = env.get_template("template_servers.html")
 WEAPON_CARD = env.get_template("weapon_card.html")
 VEHICLE_CARD = env.get_template("vehicle_card.html")
-CLASSES_CARD = env.get_template("classes_card.html")
 SERVER_CARD = env.get_template("server_card.html")
 
 
@@ -48,9 +47,6 @@ def prepare_weapons_data(d: dict, lens: int):
     """提取武器数据，格式化使用时间"""
     weapons_list = d["weapons"]
     weapons_list = sort_list_of_dicts(weapons_list, "kills")
-    for w in weapons_list[:lens]:
-        time_equipped = w.get("timeEquipped", 0)
-        w["__timeEquippedHours"] = round(time_equipped / 3600, 2)
     return [
         {**w, "__timeEquippedHours": round(w.get("timeEquipped", 0) / 3600, 2)}
         for w in weapons_list[:lens]
@@ -62,9 +58,6 @@ def prepare_vehicles_data(d: dict, lens: int):
     """提取载具数据，格式化使用时间"""
     vehicles_list = d["vehicles"]
     vehicles_list = sort_list_of_dicts(vehicles_list, "kills")
-    for v in vehicles_list[:lens]:
-        time_in = v.get("timeIn", 0)
-        v["__timeInHour"] = round(time_in / 3600, 2)
     return [
         {**w, "__timeInHour": round(w.get("timeIn", 0) / 3600, 2)}
         for w in vehicles_list[:lens]

@@ -5,7 +5,7 @@ from astrbot.api import logger
 
 from typing import Union, Pattern
 from data.plugins.astrbot_plugin_battlefield_tool.utils.requestUtil import request_api
-from data.plugins.astrbot_plugin_battlefield_tool.database.BattleFiledDataBase import (
+from data.plugins.astrbot_plugin_battlefield_tool.database.BattleFieldDataBase import (
     BattleFieldDataBase,
 )
 from data.plugins.astrbot_plugin_battlefield_tool.utils.template import (
@@ -17,9 +17,9 @@ from data.plugins.astrbot_plugin_battlefield_tool.utils.template import (
 
 import re
 import time
+import aiohttp
 
 
-@register("battlefield", "SHOOTING_STAR_C", "战地风云战绩查询插件", "1.0.0")
 class BattlefieldTool(Star):
     STAT_PATTERN = re.compile(
         r"^(\w*)(?:[，,]?game=([\w\-+.]+))?$"
@@ -33,39 +33,32 @@ class BattlefieldTool(Star):
         self.default_game = config.get("default_game")
         self.timeout_config = config.get("timeout_config")
         self.img_quality = config.get("img_quality")
-        self.bf_data_path = StarTools.get_data_dir("battleFiled_tool_plugin")
+        self.bf_data_path = StarTools.get_data_dir("battleField_tool_plugin")
         self.db = BattleFieldDataBase(self.bf_data_path)  # 初始化数据库
+        self._session = None
 
     async def initialize(self):
         """可选择实现异步的插件初始化方法，当实例化该插件类之后会自动调用该方法。"""
+        self._session = aiohttp.ClientSession()
 
     @filter.command("stat")
     async def bf_stat(self, event: AstrMessageEvent):
-        """查询战地五用户数据"""
-        message_str = event.message_str
-        lang = self.LANG_CN
-        qq_id = event.get_sender_id()
-        # 解析命令
-        ea_name, game = self._parse_input_regex(
-            ["stat"], self.STAT_PATTERN, message_str, self.default_game
-        )
-        # 如果没有传入ea_name则查询已绑定的
-        if ea_name is None:
-            bing_data = self._query_bind_user(qq_id)
-            if bing_data is None:
-                raise ValueError("请先使用bind [ea_name]绑定")
-            else:
-                ea_name = bing_data["ea_name"]
+        """查询用户数据"""
+        (
+            message_str,
+            lang,
+            qq_id,
+            ea_name,
+            game,
+        ) = await self._handle_player_data_request(event, ["stat"])
         logger.info(f"玩家id:{ea_name}，所查询游戏:{game}")
-        # 战地1使用繁中
-        if game == "bf1":
-            lang = self.LANG_TW
         # 调用API查询玩家数据
         player_data = await request_api(
             game,
             "all",
             {"name": ea_name, "lang": lang, "platform": "pc"},
             self.timeout_config,
+            session=self._session,
         )
         if player_data is None:
             yield event.plain_result("API调用失败，没有响应任何信息")
@@ -78,31 +71,22 @@ class BattlefieldTool(Star):
 
     @filter.command("weapons", alias=["武器"])
     async def bf_weapons(self, event: AstrMessageEvent):
-        """查询战地五用户数据"""
-        message_str = event.message_str
-        lang = self.LANG_CN
-        qq_id = event.get_sender_id()
-        # 解析命令
-        ea_name, game = self._parse_input_regex(
-            ["weapons", "武器"], self.STAT_PATTERN, message_str, self.default_game
-        )
-        # 如果没有传入ea_name则查询已绑定的
-        if ea_name is None:
-            bing_data = self._query_bind_user(qq_id)
-            if bing_data is None:
-                raise ValueError("请先使用bind [ea_name]绑定")
-            else:
-                ea_name = bing_data["ea_name"]
+        """查询用户武器数据"""
+        (
+            message_str,
+            lang,
+            qq_id,
+            ea_name,
+            game,
+        ) = await self._handle_player_data_request(event, ["weapons", "武器"])
         logger.info(f"玩家id:{ea_name}，所查询游戏:{game}")
-        # 战地1使用繁中
-        if game == "bf1":
-            lang = self.LANG_TW
         # 调用API查询玩家数据
         player_data = await request_api(
             game,
             "weapons",
             {"name": ea_name, "lang": lang, "platform": "pc"},
             self.timeout_config,
+            session=self._session,
         )
         if player_data is None:
             yield event.plain_result("API调用失败，没有响应任何信息")
@@ -115,31 +99,22 @@ class BattlefieldTool(Star):
 
     @filter.command("vehicles", alias=["载具"])
     async def bf_vehicles(self, event: AstrMessageEvent):
-        """查询战地五用户数据"""
-        message_str = event.message_str
-        lang = self.LANG_CN
-        qq_id = event.get_sender_id()
-        # 解析命令
-        ea_name, game = self._parse_input_regex(
-            ["vehicles", "载具"], self.STAT_PATTERN, message_str, self.default_game
-        )
-        # 如果没有传入ea_name则查询已绑定的
-        if ea_name is None:
-            bing_data = self._query_bind_user(qq_id)
-            if bing_data is None:
-                raise ValueError("请先使用bind [ea_name]绑定")
-            else:
-                ea_name = bing_data["ea_name"]
-        logger.info(f"玩家id:{ea_name}，所查询游戏:{game}")
-        # 战地1使用繁中
-        if game == "bf1":
-            lang = self.LANG_TW
+        """查询载具数据"""
+        (
+            message_str,
+            lang,
+            qq_id,
+            ea_name,
+            game,
+        ) = await self._handle_player_data_request(event, ["vehicles", "载具"])
         # 调用API查询玩家数据
+        logger.info(f"玩家id:{ea_name}，所查询游戏:{game}")
         player_data = await request_api(
             game,
             "vehicles",
             {"name": ea_name, "lang": lang, "platform": "pc"},
             self.timeout_config,
+            session=self._session,
         )
         if player_data is None:
             yield event.plain_result("API调用失败，没有响应任何信息")
@@ -153,18 +128,16 @@ class BattlefieldTool(Star):
     @filter.command("servers", alias=["服务器"])
     async def bf_servers(self, event: AstrMessageEvent):
         """查询战地五用户数据"""
-        message_str = event.message_str
-        lang = self.LANG_CN
-        # 解析命令
-        server_name, game = self._parse_input_regex(
-            ["servers", "服务器"], self.STAT_PATTERN, message_str, self.default_game
-        )
+        (
+            message_str,
+            lang,
+            qq_id,
+            server_name,
+            game,
+        ) = await self._handle_player_data_request(event, ["servers", "服务器"])
         if server_name is None:
             raise ValueError("不能查所有哦~")
         logger.info(f"查询服务器:{server_name}，所查询游戏:{game}")
-        # 战地1使用繁中
-        if game == "bf1":
-            lang = self.LANG_TW
         # 调用API查询玩家数据
         servers_data = await request_api(
             game,
@@ -177,6 +150,7 @@ class BattlefieldTool(Star):
                 "limit": 30,
             },
             self.timeout_config,
+            session=self._session,
         )
         if servers_data is None:
             yield event.plain_result("API调用失败，没有响应任何信息")
@@ -193,18 +167,20 @@ class BattlefieldTool(Star):
     @filter.command("bind", alias=["绑定"])
     async def bf_bind(self, event: AstrMessageEvent):
         """绑定本插件默认查询的用户"""
-        message_str = event.message_str
-        qq_id = event.get_sender_id()
-        # 先查询是否绑定过
-        ea_name, game = self._parse_input_regex(
-            ["bind", "绑定"], None, message_str, self.default_game
-        )
+        (
+            message_str,
+            lang,
+            qq_id,
+            ea_name,
+            game,
+        ) = await self._handle_player_data_request(event, ["bind", "绑定"])
         # 调用bfv的接口查询用户是否存在
         player_data = await request_api(
             self.default_game,
             "stats",
             {"name": ea_name, "lang": "zh-cn", "platform": "pc"},
             self.timeout_config,
+            session=self._session,
         )
         if player_data is None:
             yield event.plain_result("API调用失败，没有响应任何信息")
@@ -214,8 +190,38 @@ class BattlefieldTool(Star):
             ea_id = player_data["userId"]
             logger.debug(f"已查询到{ea_name}的ea_id：{ea_id}")
             # 持久化绑定数据
-            msg = self.upsert_user_bind(qq_id, ea_name, ea_id)
+            msg = await self.upsert_user_bind(qq_id, ea_name, ea_id)
             yield event.plain_result(msg)
+
+    async def _handle_player_data_request(
+        self, event: AstrMessageEvent, str_to_remove_list: list
+    ):
+        """
+        从消息中提取参数
+        Args:
+            event: AstrMessageEvent
+            str_to_remove_list: 去除指令
+        Returns:
+            message_str,lang,qq_id,ea_name,game
+        """
+        message_str = event.message_str
+        lang = self.LANG_CN
+        qq_id = event.get_sender_id()
+        # 解析命令
+        ea_name, game = self._parse_input_regex(
+            str_to_remove_list, self.STAT_PATTERN, message_str, self.default_game
+        )
+        # 如果没有传入ea_name则查询已绑定的
+        if ea_name is None:
+            bind_data = await self._query_bind_user(qq_id)
+            if bind_data is None:
+                raise ValueError("请先使用bind [ea_name]绑定")
+            else:
+                ea_name = bind_data["ea_name"]
+        # 战地1使用繁中
+        if game == "bf1":
+            lang = self.LANG_TW
+        return message_str, lang, qq_id, ea_name, game
 
     def _parse_input_regex(
         self,
@@ -248,7 +254,7 @@ class BattlefieldTool(Star):
             game = default_game
         return ea_name, game
 
-    def upsert_user_bind(self, qq_id: str, ea_name: str, ea_id: str):
+    async def upsert_user_bind(self, qq_id: str, ea_name: str, ea_id: str):
         """
         根据qq号更新或插入EA账号绑定
         Args:
@@ -259,9 +265,9 @@ class BattlefieldTool(Star):
             返回绑定消息
         """
         # 1. 尝试获取旧数据
-        old_data = self._query_bind_user(qq_id)
+        old_data = await self._query_bind_user(qq_id)
         # 2. 执行插入或更新
-        self.db.exec_sql(
+        await self.db.exec_sql(
             """
                          INSERT INTO battleField_user_binds (qq_id, ea_name, ea_id)
                          VALUES (?, ?, ?) ON CONFLICT(qq_id) DO
@@ -274,10 +280,10 @@ class BattlefieldTool(Star):
         if old_data is not None:
             msg = f"更新绑定记数据: {old_data['ea_name']}-->{ea_name}"
         else:
-            msg = f"成功绑定EA_NAME[{ea_name}]"
+            msg = f"成功绑定EA_NAME：{ea_name}"
         return msg  # 返回旧数据或None
 
-    def _query_bind_user(self, qq_id: str):
+    async def _query_bind_user(self, qq_id: str):
         """
         根据qq号查询绑定的ea_name
             Args:
@@ -285,7 +291,7 @@ class BattlefieldTool(Star):
         Returns:
             返回数据（没有则返回None）
         """
-        return self.db.query(
+        return await self.db.query(
             "SELECT * FROM battleField_user_binds WHERE qq_id = ?",
             (qq_id,),
             fetch_all=False,
