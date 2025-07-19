@@ -19,7 +19,7 @@ import re
 import time
 
 
-@register("battlefield", "SHOOTING_STAR_C", "一个BATTLEFIELD数据查询插件", "0.1")
+@register("battlefield", "SHOOTING_STAR_C", "战地风云战绩查询插件", "1.0.0")
 class BattlefieldTool(Star):
     STAT_PATTERN = re.compile(
         r"^(\w*)(?:[，,]?game=([\w\-+.]+))?$"
