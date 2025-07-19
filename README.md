@@ -1,10 +1,16 @@
 # astrbot_plugin_battlefield_tool
 
-# ✨Astrbot 一个查询战地风云战绩统计的插件
-
+# ✨Astrbot 战地风云战绩查询插件
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.8+](https://img.shields.io/badge/Python-3.8%2B-blue.svg)](https://www.python.org/)
 [![AstrBot](https://img.shields.io/badge/AstrBot-3.4%2B-orange.svg)](https://github.com/Soulter/AstrBot)
+
+一个基于 Astrbot 的战地系列游戏(BF1/BF4/BF5)战绩统计查询插件，支持：
+
+- 玩家战绩查询
+- 武器/载具统计
+- 服务器查询
+
 
 ## 🎮 支持游戏
 
