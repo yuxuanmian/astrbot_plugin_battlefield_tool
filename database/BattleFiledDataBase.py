@@ -12,16 +12,19 @@ class BattleFieldDataBase:
     def __init__(self, bf_db_path: str = None):
         super().__init__()
         if bf_db_path is None:
-            self.bf_db_path = os.path.join(StarTools.get_data_dir("battleFiled_tool_plugin"), self.bf_db_name)
+            self.bf_db_path = os.path.join(
+                StarTools.get_data_dir("battleFiled_tool_plugin"), self.bf_db_name
+            )
         else:
             self.bf_db_path = os.path.join(bf_db_path, self.bf_db_name)
         self._init_db()
 
     def _init_db(self):
         """初始化数据库连接"""
-        sql_path = os.path.join(os.path.dirname(__file__), "sql", "battleFiled_tool_plugin_init.sql")  # 更安全的路径拼接
-        with open(sql_path, encoding="utf-8") as f, \
-                self._get_conn() as conn:
+        sql_path = os.path.join(
+            os.path.dirname(__file__), "sql", "battleFiled_tool_plugin_init.sql"
+        )  # 更安全的路径拼接
+        with open(sql_path, encoding="utf-8") as f, self._get_conn() as conn:
             try:
                 conn.executescript(f.read())
             except sqlite3.Error as e:
@@ -47,8 +50,12 @@ class BattleFieldDataBase:
             cursor.execute(sql, params or ())
             conn.commit()
 
-    def query(self, sql: str, params: Optional[Union[Tuple, Dict]] = None, fetch_all: bool = True) -> Union[
-        List[Dict], Optional[Dict]]:
+    def query(
+        self,
+        sql: str,
+        params: Optional[Union[Tuple, Dict]] = None,
+        fetch_all: bool = True,
+    ) -> Union[List[Dict], Optional[Dict]]:
         """
         执行SQL查询并返回结果
 
