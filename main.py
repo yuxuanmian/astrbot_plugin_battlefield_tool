@@ -40,6 +40,7 @@ class BattlefieldTool(Star):
     async def initialize(self):
         """可选择实现异步的插件初始化方法，当实例化该插件类之后会自动调用该方法。"""
         self._session = aiohttp.ClientSession()
+        await self.db.initialize()  # 添加数据库初始化调用
 
     @filter.command("stat")
     async def bf_stat(self, event: AstrMessageEvent):
