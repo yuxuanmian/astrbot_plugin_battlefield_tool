@@ -1,5 +1,5 @@
 from astrbot.api.event import filter, AstrMessageEvent
-from astrbot.api.star import Context, Star, register, StarTools
+from astrbot.api.star import Context, Star, StarTools
 from astrbot.api.all import AstrBotConfig
 from astrbot.api import logger
 
@@ -51,9 +51,15 @@ class BattlefieldTool(Star):
             qq_id,
             ea_name,
             game,
+            server_name,
+            error_msg
         ) = await self._handle_player_data_request(event, ["stat"])
+
+        if error_msg:
+            yield event.plain_result(error_msg)
+            return
+
         logger.info(f"玩家id:{ea_name}，所查询游戏:{game}")
-        # 调用API查询玩家数据
         player_data = await request_api(
             game,
             "all",
@@ -61,14 +67,9 @@ class BattlefieldTool(Star):
             self.timeout_config,
             session=self._session,
         )
-        if player_data is None:
-            yield event.plain_result("API调用失败，没有响应任何信息")
-        if player_data.get("code") != 200:
-            yield event.plain_result(player_data.get("errors")[0])
-        if player_data.get("code") == 200:
-            player_data["__update_time"] = time.time()
-            pic_url = await self._main_data_to_pic(player_data, game)
-            yield event.image_result(pic_url)
+
+        async for result in self._process_api_response(event, player_data, "stat", game):
+            yield result
 
     @filter.command("weapons", alias=["武器"])
     async def bf_weapons(self, event: AstrMessageEvent):
@@ -79,9 +80,15 @@ class BattlefieldTool(Star):
             qq_id,
             ea_name,
             game,
+            server_name,
+            error_msg
         ) = await self._handle_player_data_request(event, ["weapons", "武器"])
+
+        if error_msg:
+            yield event.plain_result(error_msg)
+            return
+
         logger.info(f"玩家id:{ea_name}，所查询游戏:{game}")
-        # 调用API查询玩家数据
         player_data = await request_api(
             game,
             "weapons",
@@ -89,14 +96,9 @@ class BattlefieldTool(Star):
             self.timeout_config,
             session=self._session,
         )
-        if player_data is None:
-            yield event.plain_result("API调用失败，没有响应任何信息")
-        if player_data.get("code") != 200:
-            yield event.plain_result(player_data.get("errors")[0])
-        if player_data.get("code") == 200:
-            player_data["__update_time"] = time.time()
-            pic_url = await self._weapons_data_to_pic(player_data, game)
-            yield event.image_result(pic_url)
+
+        async for result in self._process_api_response(event, player_data, "weapons", game):
+            yield result
 
     @filter.command("vehicles", alias=["载具"])
     async def bf_vehicles(self, event: AstrMessageEvent):
@@ -107,8 +109,14 @@ class BattlefieldTool(Star):
             qq_id,
             ea_name,
             game,
+            server_name,
+            error_msg
         ) = await self._handle_player_data_request(event, ["vehicles", "载具"])
-        # 调用API查询玩家数据
+
+        if error_msg:
+            yield event.plain_result(error_msg)
+            return
+
         logger.info(f"玩家id:{ea_name}，所查询游戏:{game}")
         player_data = await request_api(
             game,
@@ -117,29 +125,31 @@ class BattlefieldTool(Star):
             self.timeout_config,
             session=self._session,
         )
-        if player_data is None:
-            yield event.plain_result("API调用失败，没有响应任何信息")
-        if player_data.get("code") != 200:
-            yield event.plain_result(player_data.get("errors")[0])
-        if player_data.get("code") == 200:
-            player_data["__update_time"] = time.time()
-            pic_url = await self._vehicles_data_to_pic(player_data, game)
-            yield event.image_result(pic_url)
+
+        async for result in self._process_api_response(event, player_data, "vehicles", game):
+            yield result
 
     @filter.command("servers", alias=["服务器"])
     async def bf_servers(self, event: AstrMessageEvent):
-        """查询战地五用户数据"""
+        """查询服务器数据"""
         (
             message_str,
             lang,
             qq_id,
-            server_name,
+            ea_name,
             game,
+            server_name,
+            error_msg
         ) = await self._handle_player_data_request(event, ["servers", "服务器"])
+
+        if error_msg:
+            yield event.plain_result(error_msg)
+            return
         if server_name is None:
-            raise ValueError("不能查所有哦~")
+            yield event.plain_result("不能查所有哦~")
+            return
+
         logger.info(f"查询服务器:{server_name}，所查询游戏:{game}")
-        # 调用API查询玩家数据
         servers_data = await request_api(
             game,
             "servers",
@@ -153,17 +163,22 @@ class BattlefieldTool(Star):
             self.timeout_config,
             session=self._session,
         )
+
+        # 特殊处理服务器空数据情况
         if servers_data is None:
             yield event.plain_result("API调用失败，没有响应任何信息")
+            return
+
         if servers_data.get("code") != 200:
             yield event.plain_result(servers_data.get("errors")[0])
-        if servers_data.get("code") == 200:
-            if servers_data["servers"] is not None and len(servers_data["servers"]) > 0:
-                servers_data["__update_time"] = time.time()
-                pic_url = await self._servers_data_to_pic(servers_data, game)
-                yield event.image_result(pic_url)
-            else:
-                yield event.plain_result("暂无数据")
+            return
+
+        if servers_data["servers"] is not None and len(servers_data["servers"]) > 0:
+            servers_data["__update_time"] = time.time()
+            pic_url = await self._servers_data_to_pic(servers_data, game)
+            yield event.image_result(pic_url)
+        else:
+            yield event.plain_result("暂无数据")
 
     @filter.command("bind", alias=["绑定"])
     async def bf_bind(self, event: AstrMessageEvent):
@@ -174,7 +189,12 @@ class BattlefieldTool(Star):
             qq_id,
             ea_name,
             game,
+            server_name,
+            error_msg
         ) = await self._handle_player_data_request(event, ["bind", "绑定"])
+        if error_msg:
+            yield event.plain_result(error_msg)
+            return
         # 调用bfv的接口查询用户是否存在
         player_data = await request_api(
             self.default_game,
@@ -185,8 +205,12 @@ class BattlefieldTool(Star):
         )
         if player_data is None:
             yield event.plain_result("API调用失败，没有响应任何信息")
+            return
+
         if player_data.get("code") != 200:
             yield event.plain_result(player_data.get("errors")[0])
+            return
+
         if player_data.get("code") == 200:
             ea_id = player_data["userId"]
             logger.debug(f"已查询到{ea_name}的ea_id：{ea_id}")
@@ -194,8 +218,31 @@ class BattlefieldTool(Star):
             msg = await self.upsert_user_bind(qq_id, ea_name, ea_id)
             yield event.plain_result(msg)
 
+    async def _process_api_response(self, event, api_data, data_type, game):
+        """处理API响应通用逻辑"""
+        if api_data is None:
+            yield event.plain_result("API调用失败，没有响应任何信息")
+            return
+
+        if api_data.get("code") != 200:
+            yield event.plain_result(api_data.get("errors")[0])
+            return
+
+        api_data["__update_time"] = time.time()
+
+        # 根据数据类型调用对应的图片生成方法
+        handler_map = {
+            "stat": self._main_data_to_pic,
+            "weapons": self._weapons_data_to_pic,
+            "vehicles": self._vehicles_data_to_pic,
+            "servers": self._servers_data_to_pic
+        }
+
+        pic_url = await handler_map[data_type](api_data, game)
+        yield event.image_result(pic_url)
+
     async def _handle_player_data_request(
-        self, event: AstrMessageEvent, str_to_remove_list: list
+            self, event: AstrMessageEvent, str_to_remove_list: list
     ):
         """
         从消息中提取参数
@@ -203,30 +250,42 @@ class BattlefieldTool(Star):
             event: AstrMessageEvent
             str_to_remove_list: 去除指令
         Returns:
-            message_str,lang,qq_id,ea_name,game
+            tuple: (message_str, lang, qq_id, ea_name, game, error_msg)
+            error_msg: 错误信息，成功时为None
         """
         message_str = event.message_str
         lang = self.LANG_CN
         qq_id = event.get_sender_id()
-        # 解析命令
-        ea_name, game = self._parse_input_regex(
-            str_to_remove_list, self.STAT_PATTERN, message_str, self.default_game
-        )
-        # 如果没有传入ea_name则查询已绑定的
-        if ea_name is None:
-            bind_data = await self._query_bind_user(qq_id)
-            if bind_data is None:
-                raise ValueError("请先使用bind [ea_name]绑定")
-            else:
-                ea_name = bind_data["ea_name"]
-        # 战地1使用繁中
-        if game == "bf1":
-            lang = self.LANG_TW
-        return message_str, lang, qq_id, ea_name, game
+        error_msg = None
+        ea_name = None
+        game = None
+        server_name = None
 
-    def _parse_input_regex(
-        self,
-        str_to_remove_list: list[str],
+        try:
+            # 解析命令
+            ea_name, game = await self._parse_input_regex(
+                str_to_remove_list, self.STAT_PATTERN, message_str, self.default_game
+            )
+            if str_to_remove_list == ["servers", "服务器"]:
+                server_name = ea_name
+            # 如果没有传入ea_name则查询已绑定的
+            if ea_name is None:
+                bind_data = await self._query_bind_user(qq_id)
+                if bind_data is None:
+                    error_msg = "请先使用bind [ea_name]绑定"
+                else:
+                    ea_name = bind_data["ea_name"]
+            # 战地1使用繁中
+            if game == "bf1":
+                lang = self.LANG_TW
+        except Exception as e:
+            error_msg = str(e)
+
+        return message_str, lang, qq_id, ea_name, game,server_name, error_msg
+
+    @staticmethod
+    async def _parse_input_regex(
+            str_to_remove_list: list[str],
         pattern: Union[Pattern[str], None],
         base_string: str,
         default_game: str,
@@ -299,7 +358,7 @@ class BattlefieldTool(Star):
         )
 
     async def terminate(self):
-        """可选择实现异步的插件销毁方法，当插件被卸载/停用时会调用。"""
+        """可选择实现异步的插件销毁方法，当插件卸载/停用时会调用。"""
 
     async def _main_data_to_pic(self, data: dict, game: str):
         """将查询的全部数据转为图片
