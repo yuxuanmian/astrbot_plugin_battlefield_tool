@@ -19,31 +19,44 @@ class BattleFieldDataBase:
             self.bf_db_path = bf_db_path / self.bf_db_name
         self._conn = None
 
-    async def initialize(self):
-        """异步初始化数据库"""
-        await self._init_db()
-        self._conn = await self._get_conn()
+    async def _init_db(self, conn: aiosqlite.Connection):
+        """使用给定连接初始化数据库"""
+        # 修复路径拼接，确保正确找到 SQL 文件
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        sql_path = os.path.join(current_dir, "sql", "battleField_tool_plugin_init.sql")
 
-    async def _init_db(self):
-        """初始化数据库连接"""
-        sql_path = os.path.join(
-            os.path.dirname(__file__) / "sql" / "battleField_tool_plugin_init.sql"
-        )
+        logger.debug(f"尝试从路径加载初始化SQL: {sql_path}")
+
         if not os.path.exists(sql_path):
             logger.error(f"初始化SQL文件不存在: {sql_path}")
             raise FileNotFoundError(f"初始化SQL文件不存在: {sql_path}")
+
         try:
-            with open(sql_path, encoding="utf-8") as f:
+            with open(sql_path, "r", encoding="utf-8") as f:
                 sql_script = f.read()
 
-            async with await self._get_conn() as conn:
-                await conn.executescript(sql_script)
-                await conn.commit()
-                logger.info("数据库初始化成功")
+            logger.debug(f"开始执行数据库初始化脚本，文件大小: {len(sql_script)} 字节")
+            await conn.executescript(sql_script)
+            await conn.commit()
+            logger.debug("数据库表结构初始化成功")
 
         except aiosqlite.Error as e:
-            logger.error(f"数据库初始化失败: {e}")
-            raise RuntimeError(f"数据库初始化失败: {e}")
+            logger.exception(f"数据库初始化失败: {e}")
+            raise RuntimeError(f"数据库初始化失败: {e}") from e
+        except Exception as e:
+            logger.exception("未知错误发生在数据库初始化过程中")
+            raise
+
+    async def initialize(self):
+        """异步初始化数据库"""
+        logger.debug("开始初始化战场工具数据库...")
+        # 先获取主连接
+        self._conn = await self._get_conn()
+        logger.debug(f"数据库连接已建立: {self._conn}")
+
+        # 使用主连接初始化表结构
+        await self._init_db(self._conn)
+        logger.debug("战地风云数据库初始化完成")
 
     async def _get_conn(self) -> aiosqlite.Connection:
         """获取异步数据库连接(复用现有连接或创建新连接)
@@ -54,7 +67,8 @@ class BattleFieldDataBase:
         Raises:
             RuntimeError: 当连接失败时抛出
         """
-        if self._conn and not self._conn._connection.closed:
+        # 简化连接检查：如果连接存在就直接复用
+        if self._conn:
             return self._conn
 
         try:
@@ -67,7 +81,7 @@ class BattleFieldDataBase:
 
     async def close(self):
         """关闭数据库连接"""
-        if self._conn and not self._conn._connection.closed:
+        if self._conn:
             await self._conn.close()
             self._conn = None
 
