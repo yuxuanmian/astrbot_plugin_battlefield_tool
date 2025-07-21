@@ -1,5 +1,5 @@
 from astrbot.api.event import filter, AstrMessageEvent
-from astrbot.api.star import Context, Star, StarTools
+from astrbot.api.star import Context, Star, StarTools, register
 from astrbot.api.all import AstrBotConfig
 from astrbot.api import logger
 
@@ -20,6 +20,12 @@ import time
 import aiohttp
 
 
+@register(
+    "astrbot_plugin_battlefield_tool",      # name
+    "SHOOTING_STAR_C",                      # author
+    "战地风云战绩查询插件",                   # desc
+    "1.0.3"                                 # version
+)
 class BattlefieldTool(Star):
     STAT_PATTERN = re.compile(
         r"^(\w*)(?:[，,]?game=([\w\-+.]+))?$"
@@ -27,12 +33,22 @@ class BattlefieldTool(Star):
     LANG_CN = "zh-cn"
     LANG_TW = "zh-tw"
 
-    def __init__(self, context: Context, config: AstrBotConfig):
+    def __init__(self, context: Context, config: AstrBotConfig = None):
         super().__init__(context)
         self.config = config
-        self.default_game = config.get("default_game")
-        self.timeout_config = config.get("timeout_config")
-        self.img_quality = config.get("img_quality")
+        
+        # 防御性配置处理：如果config为None，使用默认值
+        if config is None:
+            logger.warning("BattlefieldTool: 未提供配置文件，将使用默认配置")
+            self.default_game = "bfv"
+            self.timeout_config = 15
+            self.img_quality = 90
+        else:
+            logger.info("BattlefieldTool: 使用用户配置文件")
+            self.default_game = config.get("default_game", "bfv")
+            self.timeout_config = config.get("timeout_config", 15)
+            self.img_quality = config.get("img_quality", 90)
+        
         self.bf_data_path = StarTools.get_data_dir("battleField_tool_plugin")
         self.db = BattleFieldDataBase(self.bf_data_path)  # 初始化数据库
         self._session = None
