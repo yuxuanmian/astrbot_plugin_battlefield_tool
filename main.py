@@ -8,6 +8,9 @@ from data.plugins.astrbot_plugin_battlefield_tool.utils.requestUtil import reque
 from data.plugins.astrbot_plugin_battlefield_tool.database.BattleFieldDataBase import (
     BattleFieldDataBase,
 )
+from data.plugins.astrbot_plugin_battlefield_tool.database.BattleFieldDBService import (
+    BattleFieldDBService,
+)
 from data.plugins.astrbot_plugin_battlefield_tool.utils.template import (
     bf_main_html_builder,
     bf_weapons_html_builder,
@@ -21,10 +24,10 @@ import aiohttp
 
 
 @register(
-    "astrbot_plugin_battlefield_tool",      # name
-    "SHOOTING_STAR_C",                      # author
-    "战地风云战绩查询插件",                   # desc
-    "1.0.3"                                 # version
+    "astrbot_plugin_battlefield_tool",  # name
+    "SHOOTING_STAR_C",  # author
+    "战地风云战绩查询插件",  # desc
+    "1.0.4",  # version
 )
 class BattlefieldTool(Star):
     STAT_PATTERN = re.compile(
@@ -36,7 +39,7 @@ class BattlefieldTool(Star):
     def __init__(self, context: Context, config: AstrBotConfig = None):
         super().__init__(context)
         self.config = config
-        
+
         # 防御性配置处理：如果config为None，使用默认值
         if config is None:
             logger.warning("BattlefieldTool: 未提供配置文件，将使用默认配置")
@@ -48,9 +51,10 @@ class BattlefieldTool(Star):
             self.default_game = config.get("default_game", "bfv")
             self.timeout_config = config.get("timeout_config", 15)
             self.img_quality = config.get("img_quality", 90)
-        
+
         self.bf_data_path = StarTools.get_data_dir("battleField_tool_plugin")
         self.db = BattleFieldDataBase(self.bf_data_path)  # 初始化数据库
+        self.db_service = BattleFieldDBService(self.db)  # 初始化数据库服务
         self._session = None
 
     async def initialize(self):
@@ -68,7 +72,7 @@ class BattlefieldTool(Star):
             ea_name,
             game,
             server_name,
-            error_msg
+            error_msg,
         ) = await self._handle_player_data_request(event, ["stat"])
 
         if error_msg:
@@ -84,7 +88,9 @@ class BattlefieldTool(Star):
             session=self._session,
         )
 
-        async for result in self._process_api_response(event, player_data, "stat", game):
+        async for result in self._process_api_response(
+            event, player_data, "stat", game
+        ):
             yield result
 
     @filter.command("weapons", alias=["武器"])
@@ -97,7 +103,7 @@ class BattlefieldTool(Star):
             ea_name,
             game,
             server_name,
-            error_msg
+            error_msg,
         ) = await self._handle_player_data_request(event, ["weapons", "武器"])
 
         if error_msg:
@@ -113,7 +119,9 @@ class BattlefieldTool(Star):
             session=self._session,
         )
 
-        async for result in self._process_api_response(event, player_data, "weapons", game):
+        async for result in self._process_api_response(
+            event, player_data, "weapons", game
+        ):
             yield result
 
     @filter.command("vehicles", alias=["载具"])
@@ -126,7 +134,7 @@ class BattlefieldTool(Star):
             ea_name,
             game,
             server_name,
-            error_msg
+            error_msg,
         ) = await self._handle_player_data_request(event, ["vehicles", "载具"])
 
         if error_msg:
@@ -142,7 +150,9 @@ class BattlefieldTool(Star):
             session=self._session,
         )
 
-        async for result in self._process_api_response(event, player_data, "vehicles", game):
+        async for result in self._process_api_response(
+            event, player_data, "vehicles", game
+        ):
             yield result
 
     @filter.command("servers", alias=["服务器"])
@@ -155,7 +165,7 @@ class BattlefieldTool(Star):
             ea_name,
             game,
             server_name,
-            error_msg
+            error_msg,
         ) = await self._handle_player_data_request(event, ["servers", "服务器"])
 
         if error_msg:
@@ -206,7 +216,7 @@ class BattlefieldTool(Star):
             ea_name,
             game,
             server_name,
-            error_msg
+            error_msg,
         ) = await self._handle_player_data_request(event, ["bind", "绑定"])
         if error_msg:
             yield event.plain_result(error_msg)
@@ -231,7 +241,38 @@ class BattlefieldTool(Star):
             ea_id = player_data["userId"]
             logger.debug(f"已查询到{ea_name}的ea_id：{ea_id}")
             # 持久化绑定数据
-            msg = await self.upsert_user_bind(qq_id, ea_name, ea_id)
+            msg = await self.db_service.upsert_user_bind(qq_id, ea_name, ea_id)
+            yield event.plain_result(msg)
+
+    @filter.command("bf_init")
+    async def bf_init(self, event: AstrMessageEvent):
+        """同一机器人不同会话渠道配置不同的默认查询"""
+        message_str = event.message_str
+        session_channel_id = event.get_sender_id()
+
+        if not event.is_private_chat():
+            # 群聊只能机器人管理员设置渠道绑定命令
+            if not event.is_admin():
+                yield event.plain_result(
+                    "没有权限哦，群聊只能机器人管理员使用[bf_init]命令呢"
+                )
+                return
+
+            session_channel_id = event.get_group_id()
+
+        # 解析命令
+        ea_name, game = await self._parse_input_regex(
+            ["bf_init"], self.STAT_PATTERN, message_str
+        )
+        # 由于共用解析命令所以这里赋个值
+        default_game = ea_name
+        if default_game is None:
+            yield event.plain_result("不能设置空哦~")
+        else:
+            # 持久化渠道数据
+            msg = await self.db_service.upsert_session_channel(
+                session_channel_id, default_game
+            )
             yield event.plain_result(msg)
 
     async def _process_api_response(self, event, api_data, data_type, game):
@@ -251,14 +292,14 @@ class BattlefieldTool(Star):
             "stat": self._main_data_to_pic,
             "weapons": self._weapons_data_to_pic,
             "vehicles": self._vehicles_data_to_pic,
-            "servers": self._servers_data_to_pic
+            "servers": self._servers_data_to_pic,
         }
 
         pic_url = await handler_map[data_type](api_data, game)
         yield event.image_result(pic_url)
 
     async def _handle_player_data_request(
-            self, event: AstrMessageEvent, str_to_remove_list: list
+        self, event: AstrMessageEvent, str_to_remove_list: list
     ):
         """
         从消息中提取参数
@@ -272,21 +313,34 @@ class BattlefieldTool(Star):
         message_str = event.message_str
         lang = self.LANG_CN
         qq_id = event.get_sender_id()
+        session_channel_id = event.get_sender_id()
         error_msg = None
         ea_name = None
         game = None
         server_name = None
+        if not event.is_private_chat():
+            session_channel_id = event.get_group_id()
 
         try:
             # 解析命令
             ea_name, game = await self._parse_input_regex(
-                str_to_remove_list, self.STAT_PATTERN, message_str, self.default_game
+                str_to_remove_list, self.STAT_PATTERN, message_str
             )
+            # 由于共用解析方法所以这里赋个值
             if str_to_remove_list == ["servers", "服务器"]:
                 server_name = ea_name
+            # 如果没有输入游戏标识则先查询渠道配置的
+            if game is None:
+                bd_game = await self.db_service.query_session_channel(
+                    session_channel_id
+                )
+                if bd_game is None:
+                    game = self.default_game
+                else:
+                    game = bd_game["default_game_tag"]
             # 如果没有传入ea_name则查询已绑定的
             if ea_name is None:
-                bind_data = await self._query_bind_user(qq_id)
+                bind_data = await self.db_service.query_bind_user(qq_id)
                 if bind_data is None:
                     error_msg = "请先使用bind [ea_name]绑定"
                 else:
@@ -297,14 +351,13 @@ class BattlefieldTool(Star):
         except Exception as e:
             error_msg = str(e)
 
-        return message_str, lang, qq_id, ea_name, game,server_name, error_msg
+        return message_str, lang, qq_id, ea_name, game, server_name, error_msg
 
     @staticmethod
     async def _parse_input_regex(
-            str_to_remove_list: list[str],
+        str_to_remove_list: list[str],
         pattern: Union[Pattern[str], None],
         base_string: str,
-        default_game: str,
     ):
         """私有方法：从base_string中移除str_to_remove_list并去空格，然后根据正则取出参数
         Args:
@@ -324,57 +377,11 @@ class BattlefieldTool(Star):
             if not match:
                 raise ValueError("格式错误，正确格式：[用户名][,game=游戏名]")
             ea_name = match.group(1) or None
-            game = match.group(2) or default_game
+            game = match.group(2)
         else:
             ea_name = clean_str.strip()
-            game = default_game
+            game = None
         return ea_name, game
-
-    async def upsert_user_bind(self, qq_id: str, ea_name: str, ea_id: str):
-        """
-        根据qq号更新或插入EA账号绑定
-        Args:
-            qq_id: 用户QQ号
-            ea_name: 游戏ID名称
-            ea_id: EA账号ID
-        Returns:
-            返回绑定消息
-        """
-        # 1. 尝试获取旧数据
-        old_data = await self._query_bind_user(qq_id)
-        # 2. 执行插入或更新
-        await self.db.exec_sql(
-            """
-                         INSERT INTO battleField_user_binds (qq_id, ea_name, ea_id)
-                         VALUES (?, ?, ?) ON CONFLICT(qq_id) DO
-                         UPDATE SET
-                             ea_name = excluded.ea_name,
-                             ea_id = excluded.ea_id
-                         """,
-            (qq_id, ea_name, ea_id),
-        )
-        if old_data is not None:
-            msg = f"更新绑定记数据: {old_data['ea_name']}-->{ea_name}"
-        else:
-            msg = f"成功绑定EA_NAME：{ea_name}"
-        return msg  # 返回旧数据或None
-
-    async def _query_bind_user(self, qq_id: str):
-        """
-        根据qq号查询绑定的ea_name
-            Args:
-                qq_id: 用户QQ号
-        Returns:
-            返回数据（没有则返回None）
-        """
-        return await self.db.query(
-            "SELECT * FROM battleField_user_binds WHERE qq_id = ?",
-            (qq_id,),
-            fetch_all=False,
-        )
-
-    async def terminate(self):
-        """可选择实现异步的插件销毁方法，当插件卸载/停用时会调用。"""
 
     async def _main_data_to_pic(self, data: dict, game: str):
         """将查询的全部数据转为图片
@@ -461,3 +468,48 @@ class BattlefieldTool(Star):
             },
         )
         return url
+
+    @filter.command("bf_help")
+    async def bf_help(self, event: AstrMessageEvent):
+        """显示战地插件帮助信息"""
+        help_msg = """战地风云插件使用帮助：
+1. 账号绑定
+命令: /bind [ea_name] 或 /绑定 [ea_name]
+参数: ea_name - 您的EA账号名
+示例: /bind ExamplePlayer
+
+2. 默认查询设置
+命令: /bf_init [游戏代号]
+参数: 游戏代号(bf4/bf1/bfv等)
+注意: 私聊都能使用，群聊中仅bot管理员可用
+
+3. 战绩查询
+命令: /stat [ea_name],game=[游戏代号]
+参数:
+  ea_name - EA账号名(可选，已绑定则可不填)
+  game - 游戏代号(可选)
+示例: /stat ExamplePlayer,game=bf1
+
+4. 武器统计
+命令: /weapons [ea_name],game=[游戏代号] 或 /武器 [ea_name],game=[游戏代号]
+参数同上
+示例: /weapons ExamplePlayer,game=bfv
+
+5. 载具统计
+命令: /vehicles [ea_name],game=[游戏代号] 或 /载具 [ea_name],game=[游戏代号]
+参数同上
+示例: /vehicles ExamplePlayer
+
+6. 服务器查询
+命令: /servers [server_name],game=[游戏代号] 或 /服务器 [server_name],game=[游戏代号]
+参数:
+  server_name - 服务器名称(必填)
+  game - 游戏代号(可选)
+示例: /servers 中文服务器,game=bf1
+
+注: 实际使用时不需要输入[]。/为唤醒词，以实际情况为准
+"""
+        yield event.plain_result(help_msg)
+
+    async def terminate(self):
+        """可选择实现异步的插件销毁方法，当插件卸载/停用时会调用。"""

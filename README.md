@@ -20,19 +20,21 @@
 
 ## ⌨️ 使用命令
 
-| 功能 | 命令格式 | 参数说明                                             | 别名 |
-|------|----------|--------------------------------------------------|------|
-| **账号绑定** | `/bind [ea_name]` | `ea_name`: EA账号名                                 | `/绑定` |
-| **查询战绩** | `/stat [ea_name],game=[游戏代号]` | `ea_name`: EA账号名<br>`game`: 游戏代号    | - |
-| **武器统计** | `/weapons [ea_name],game=[游戏代号]` | `ea_name`: EA账号名<br>`game`: 游戏代号    | `/武器` |
-| **载具统计** | `/vehicles [ea_name],game=[游戏代号]` | `ea_name`: EA账号名<br>`game`: 游戏代号    | `/载具` |
-| **服务器查询** | `/servers [server_name],game=[游戏代号]` | `server_name`: 服务器名<br>`game`: 游戏代号 | `/服务器` |
+| 功能        | 命令格式                                     | 参数说明                                | 备注                  | 别名 |
+|-----------|------------------------------------------|-------------------------------------|---------------------|--|
+| **账号绑定**  | `{唤醒词}bind [ea_name]`                    | `ea_name`: EA账号名                    |          -           | `/绑定` |
+| **默认查询**  | `{唤醒词}bf_init [游戏代号]`                    | 游戏代号                                | 私聊都能使用，群聊中仅bot管理员可用 | - |
+| **查询战绩**  | `{唤醒词}stat [ea_name],game=[游戏代号]`        | `ea_name`: EA账号名<br>`game`: 游戏代号    |          -           | - |
+| **武器统计**  | `{唤醒词}weapons [ea_name],game=[游戏代号]`     | `ea_name`: EA账号名<br>`game`: 游戏代号    |          -           | `/武器` |
+| **载具统计**  | `{唤醒词}vehicles [ea_name],game=[游戏代号]`    | `ea_name`: EA账号名<br>`game`: 游戏代号    |           -          | `/载具` |
+| **服务器查询** | `{唤醒词}servers [server_name],game=[游戏代号]` | `server_name`: 服务器名<br>`game`: 游戏代号 |       -              | `/服务器` |
+| **帮助**    | `{唤醒词}bf_help`                           | -                                   |       -              | - |
 💡 提示
 
 **游戏代号对照表**:
-- `bf4`: 战地4
-- `bf1`: 战地1
-- `bf5`: 战地5
+- `bf4`: 战地风云4
+- `bf1`: 战地风云1
+- `bfv`: 战地风云5
 
 **命令示例**
 - `全参`:/stat shooting_star_c,game=bf4
@@ -51,7 +53,7 @@
 
 html转图服务能力来自[CampuxUtility](https://github.com/idoknow/CampuxUtility)  
 
-如果条件允许建议自部署一个，详见[Astrbot文档](https://astrbot.app/)的其他章节
+astrbot自带的文转图可能不稳定， 如果条件允许建议自部署一个，详见[Astrbot文档](https://astrbot.app/)的其他章节
 
 ## 👍致谢
 ### 🎮 数据服务
@@ -63,7 +65,12 @@ html转图服务能力来自[CampuxUtility](https://github.com/idoknow/CampuxUti
 ### 🖼️ 资源托管
 - [路过图床](https://imgse.com/) - 提供图片托管服务
 
+### 🥰 特别感谢 
+[@EIA2024](https://github.com/EIA2024) 的贡献！
+
 🙌 衷心感谢所有使用者和贡献者的支持！您的反馈和建议是我们持续改进的动力！
+
+
 
 ## 🤝 参与贡献
 欢迎任何形式的贡献！以下是标准贡献流程：
