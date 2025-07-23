@@ -103,7 +103,7 @@
         {% from "weapon_card.html" import weapon_card %}
         {% if weapon_data is not none %}
         {% for weapon in weapon_data %}
-        {{ weapon_card(weapon) }}
+        {{ weapon_card(w=weapon,game=game) }}
         {% if not loop.last %}<br />{% endif %}
         {% endfor %}
         {% else %}

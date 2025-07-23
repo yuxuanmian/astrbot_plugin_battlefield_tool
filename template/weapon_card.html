@@ -1,9 +1,16 @@
-{% macro weapon_card(w) %}
+{% macro weapon_card(w,game) %}
 <div class="flex grid grid-cols-6 gap-2 rounded-lg" style="padding: 10px; background-color: rgba(255,255,255,0.05);">
+    {% if game != 'bf4' %}
     <div class=" col-span-2 row-span-2 flex flex-col justify-center items-center">
         <img src="{{ w.image }}" class="object-scale-down" style="height:90px;width:200px;" />
         {{ w.weaponName }}
     </div>
+    {% else %}
+    <div class=" col-span-2 row-span-2 flex flex-col justify-center items-center">
+        <img src="{{ w.image }}" class="object-scale-down" style="height:50px;width:140px;" />
+        {{ w.weaponName }}
+    </div>
+    {% endif %}
     <div>
         <div class="text-1xl text-yellow-400">击杀</div>
         <div class="text-2xl font-bold font-mono">{{ w.kills }}</div>
@@ -20,6 +27,7 @@
         <div class="text-1xl text-yellow-400">命中率</div>
         <div class="text-2xl font-bold font-mono">{{ w.accuracy }}</div>
     </div>
+    {% if game != 'bf4' %}
     <div>
         <div class="text-1xl text-yellow-400">使用时间</div>
         <div class="text-2xl font-bold font-mono">{{ w.__timeEquippedHours }}h</div>
@@ -36,5 +44,6 @@
         <div class="text-1xl text-yellow-400">命中数</div>
         <div class="text-2xl font-bold font-mono">{{ w.shotsHit }}</div>
     </div>
+    {% endif %}
 </div>
 {% endmacro %}

@@ -20,6 +20,9 @@ BF4_LOGO = "https://s21.ax1x.com/2025/07/19/pV3IRaT.png"
 BF1_LOGO = "https://s21.ax1x.com/2025/07/19/pV35O3j.png"
 BFV_LOGO = "https://s21.ax1x.com/2025/07/19/pV35LCQ.png"
 
+#修复部分图标不展示的问题
+SU_50 = "https://s21.ax1x.com/2025/07/23/pVGGFeK.png"
+
 LOGOS = {"bf3": BF3_LOGO, "bf4": BF4_LOGO, "bf1": BF1_LOGO, "bfv": BFV_LOGO}
 
 # 默认头像
@@ -43,25 +46,35 @@ def sort_list_of_dicts(list_of_dicts, key):
     return sorted(list_of_dicts, key=lambda k: k[key], reverse=True)
 
 
-def prepare_weapons_data(d: dict, lens: int):
+def prepare_weapons_data(d: dict, lens: int,game:str):
     """提取武器数据，格式化使用时间"""
     weapons_list = d["weapons"]
     weapons_list = sort_list_of_dicts(weapons_list, "kills")
-    return [
-        {**w, "__timeEquippedHours": round(w.get("timeEquipped", 0) / 3600, 2)}
-        for w in weapons_list[:lens]
-        if (w.get("timeEquipped", 0) > 0 and w.get("kills", 0) > 0)
-    ]
-
+    if game == "bf4":
+        return [
+            {**w, "__timeEquippedHours": 0, "timeEquipped": 0}
+            for w in weapons_list[:lens]
+            if  w.get("kills", 0) > 0
+        ]
+    else:
+        return [
+            {**w, "__timeEquippedHours": round(w.get("timeEquipped", 0) / 3600, 2)}
+            for w in weapons_list[:lens]
+            if  w.get("kills", 0) > 0
+        ]
 
 def prepare_vehicles_data(d: dict, lens: int):
     """提取载具数据，格式化使用时间"""
     vehicles_list = d["vehicles"]
     vehicles_list = sort_list_of_dicts(vehicles_list, "kills")
     return [
-        {**w, "__timeInHour": round(w.get("timeIn", 0) / 3600, 2)}
+        {
+            **w,
+            "__timeInHour": round(w.get("timeIn", 0) / 3600, 2),
+            "image": SU_50 if w.get("vehicleName", "").lower() == "su-50" else w.get("image", "")
+        }
         for w in vehicles_list[:lens]
-        if (w.get("timeIn", 0) > 0 and w.get("kills", 0) > 0)
+        if  w.get("kills", 0) > 0
     ]
 
 
@@ -83,7 +96,7 @@ def bf_main_html_builder(d, game):
     d["longestHeadShot"] = int(d["longestHeadShot"])
 
     # 整理数据
-    weapon_data = prepare_weapons_data(d, 5)
+    weapon_data = prepare_weapons_data(d, 5,game)
     vehicle_data = prepare_vehicles_data(d, 5)
 
     html = MAIN_TEMPLATE.render(
@@ -112,7 +125,7 @@ def bf_weapons_html_builder(d, game):
     update_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(d["__update_time"]))
 
     # 整理数据
-    weapon_data = prepare_weapons_data(d, 50)
+    weapon_data = prepare_weapons_data(d, 50,game)
 
     html = WEAPONS_TEMPLATE.render(
         banner=banner,
